@@ -2,32 +2,11 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
 import { ParallaxSection } from '../sections/ParallaxSection';
-
-const testimonials = [
-  {
-    id: 1,
-    name: 'Sai Krishna',
-    position: 'Client',
-    content: "SCIA GLOBAL delivered professional, efficient IT assurance and consultation. Their knowledgeable team streamlined our security and compliance with clear guidance. Highly recommended!",
-    rating: 5
-  },
-  {
-    id: 2,
-    name: 'Revanth',
-    position: 'Employee',
-    content: "Amazing place to work, especially the work culture and the standards the organisation follow are inspiring. The leaders have knowledge of what needs to be done and how it should be done. Great place",
-    rating: 5
-  },
-  {
-    id: 3,
-    name: 'CA Naveen',
-    position: 'Client',
-    content: "Excellent consultancy with a highly skilled and professional team",
-    rating: 5
-  }
-];
+import { useAdmin } from '../../context/AdminContext';
 
 export const TestimonialsSection: React.FC = () => {
+  const { testimonials } = useAdmin();
+
   return (
     <ParallaxSection className="py-20 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -50,7 +29,7 @@ export const TestimonialsSection: React.FC = () => {
               key={testimonial.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: testimonial.id * 0.1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
               className="bg-white p-6 rounded-lg shadow-lg"
             >

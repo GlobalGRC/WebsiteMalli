@@ -3,7 +3,6 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Shield, Zap, Globe } from 'lucide-react';
 import { Typewriter } from 'react-simple-typewriter';
 import { ImageSlider } from '../animations/ImageSlider';
-import * as THREE from 'three';
 
 export const HeroSection: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);

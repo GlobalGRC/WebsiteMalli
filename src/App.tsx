@@ -23,13 +23,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 function App() {
   return (
     <AdminProvider>
-      <Router>
-        <Layout>
-          <Routes>
+    <Router>
+      <Layout>
+        <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage />} />
             <Route path="/hero" element={<HeroPage />} />
-            <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses" element={<CoursesPage />} />
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/careers" element={<CareersPage />} />
@@ -47,9 +47,9 @@ function App() {
 
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Layout>
-      </Router>
+        </Routes>
+      </Layout>
+    </Router>
     </AdminProvider>
   );
 }

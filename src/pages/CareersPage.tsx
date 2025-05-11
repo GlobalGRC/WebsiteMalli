@@ -3,53 +3,16 @@ import { Briefcase, MapPin, Clock, ArrowRight, CheckCircle } from 'lucide-react'
 import { MotionCard } from '../components/animations/MotionCard';
 import { ParallaxSection } from '../components/animations/ParallaxSection';
 import { JobApplicationForm } from '../components/forms/JobApplicationForm';
+import { useAdmin } from '../context/AdminContext';
 
 export const CareersPage: React.FC = () => {
-  const [selectedJob, setSelectedJob] = useState<number | null>(null);
+  const [selectedJob, setSelectedJob] = useState<string | null>(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [formData, setFormData] = useState({ position: '' });
+  const { jobs } = useAdmin();
 
-  const jobOpenings = [
-    {
-      id: 1,
-      title: 'Cybersecurity Consultant',
-      location: 'Remote / Hybrid',
-      type: 'Full-time',
-      description: 'Join our team as a Cybersecurity Consultant and help clients protect their digital assets. You will assess security risks, implement security measures, and provide expert guidance on cybersecurity best practices.',
-      requirements: [
-        'Bachelor\'s degree in Computer Science or related field',
-        '3+ years of experience in cybersecurity',
-        'Certifications like CISSP, CISM, or CEH preferred',
-        'Strong knowledge of security frameworks and compliance standards'
-      ]
-    },
-    {
-      id: 2,
-      title: 'GRC Specialist',
-      location: 'Remote / Hybrid',
-      type: 'Full-time',
-      description: 'As a GRC Specialist, you will help organizations establish and maintain effective governance, risk management, and compliance programs. You will work closely with clients to implement and optimize their GRC frameworks.',
-      requirements: [
-        'Bachelor\'s degree in Business, IT, or related field',
-        '2+ years of experience in GRC or compliance',
-        'Knowledge of regulatory frameworks (SOX, GDPR, etc.)',
-        'Strong analytical and problem-solving skills'
-      ]
-    },
-    {
-      id: 3,
-      title: 'IT Auditor',
-      location: 'Remote / Hybrid',
-      type: 'Full-time',
-      description: 'We are seeking an IT Auditor to conduct comprehensive audits of IT systems and processes. You will evaluate controls, identify risks, and provide recommendations for improvement.',
-      requirements: [
-        'Bachelor\'s degree in Accounting, IT, or related field',
-        '2+ years of IT audit experience',
-        'CISA certification preferred',
-        'Knowledge of audit methodologies and frameworks'
-      ]
-    }
-  ];
+  // Filter only open jobs
+  const openJobs = jobs.filter(job => job.status === 'open');
 
   return (
     <div className="min-h-screen bg-white">
@@ -143,7 +106,7 @@ export const CareersPage: React.FC = () => {
         <div className="container mx-auto px-4 md:px-6">
           <h2 className="text-3xl font-bold text-center mb-12">Current Openings</h2>
           <div className="grid grid-cols-1 gap-8">
-            {jobOpenings.map((job) => (
+            {openJobs.map((job) => (
               <ParallaxSection key={job.id} speed={0.05}>
                 <MotionCard depth={10}>
                   <div 
@@ -162,7 +125,7 @@ export const CareersPage: React.FC = () => {
                           </span>
                           <span className="flex items-center">
                             <Clock className="h-4 w-4 mr-1" />
-                            {job.type}
+                            {job.department}
                           </span>
                         </div>
                       </div>

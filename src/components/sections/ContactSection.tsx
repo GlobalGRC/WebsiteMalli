@@ -56,13 +56,13 @@ export const ContactSection: React.FC = () => {
           message: 'Thank you for your message. We will get back to you soon!'
         });
         
-        setFormState({
-          name: '',
-          email: '',
-          company: '',
-          message: '',
-          service: ''
-        });
+    setFormState({
+      name: '',
+      email: '',
+      company: '',
+      message: '',
+      service: ''
+    });
       } else {
         throw new Error('Failed to send email');
       }
@@ -209,8 +209,8 @@ export const ContactSection: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <Send className="mr-2 h-5 w-5" />
-                      Send Message
+                  <Send className="mr-2 h-5 w-5" />
+                  Send Message
                     </>
                   )}
                 </Button>
