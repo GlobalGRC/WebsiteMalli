@@ -10,6 +10,7 @@ import { HeroPage } from './pages/HeroPage';
 import { AdminPanel } from './pages/AdminPanel';
 import { AdminLogin } from './pages/AdminLogin';
 import { AdminProvider } from './context/AdminContext';
+import { BlogPage } from './pages/BlogPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -34,6 +35,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/blog" element={<BlogPage />} />
 
             {/* Protected Admin Routes */}
             <Route

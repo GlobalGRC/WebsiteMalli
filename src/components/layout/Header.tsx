@@ -79,6 +79,12 @@ export const Header: React.FC = () => {
             >
               SCIA ACADEMY
             </RouterLink>
+            <RouterLink 
+              to="/blog" 
+              className="text-md font-medium hover:text-[#E60028] transition-colors duration-300"
+            >
+              BLOG
+            </RouterLink>
           </nav>
         </div>
         
@@ -131,6 +137,13 @@ export const Header: React.FC = () => {
             onClick={toggleMenu}
           >
             CARRERS
+          </RouterLink>
+          <RouterLink 
+            to="/blog" 
+            className="text-md font-medium hover:text-[#E60028] transition-colors duration-300"
+            onClick={toggleMenu}
+          >
+            BLOG
           </RouterLink>
           <MobileNavItem 
             href="#contact" 
