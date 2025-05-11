@@ -15,6 +15,21 @@ export const AdminPanel: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'users'>('jobs');
 
+  const { jobs, testimonials } = useAdmin();
+
+  // Analytics
+  const totalJobs = jobs.length;
+  const openJobs = jobs.filter(job => job.status === 'open').length;
+  const totalTestimonials = testimonials.length;
+
+  // Recent Activity (last 3 jobs and testimonials by createdAt/id)
+  const recentJobs = [...jobs]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
+  const recentTestimonials = [...testimonials]
+    .sort((a, b) => Number(b.id) - Number(a.id))
+    .slice(0, 3);
+
   // Check authentication on component mount
   useEffect(() => {
     const userData = localStorage.getItem('adminUser');
@@ -64,6 +79,39 @@ export const AdminPanel: React.FC = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
+        {/* Analytics Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+            <span className="text-3xl font-bold text-[#E60028]">{totalJobs}</span>
+            <span className="text-gray-600 mt-2">Total Jobs</span>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+            <span className="text-3xl font-bold text-green-600">{openJobs}</span>
+            <span className="text-gray-600 mt-2">Open Jobs</span>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+            <span className="text-3xl font-bold text-[#E60028]">{totalTestimonials}</span>
+            <span className="text-gray-600 mt-2">Total Testimonials</span>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <span className="font-semibold text-gray-700">Recent Activity</span>
+            <div className="mt-2">
+              <span className="text-sm font-bold text-gray-500">Jobs:</span>
+              <ul className="text-xs text-gray-600 list-disc ml-4">
+                {recentJobs.map(job => (
+                  <li key={job.id}>{job.title} ({job.status})</li>
+                ))}
+              </ul>
+              <span className="text-sm font-bold text-gray-500 mt-2 block">Testimonials:</span>
+              <ul className="text-xs text-gray-600 list-disc ml-4">
+                {recentTestimonials.map(t => (
+                  <li key={t.id}>{t.name} ({t.rating}★)</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* Navigation Tabs */}
         <div className="flex gap-4 mb-8">
           <button
