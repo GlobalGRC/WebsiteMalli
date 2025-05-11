@@ -12,7 +12,6 @@ export const Footer: React.FC = () => {
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
-              <Shield className="text-[#E60028] h-8 w-8 mr-2" />
               <span className="font-bold text-2xl">SCIA GLOBAL</span>
             </div>
             <p className="text-gray-400 mb-4">
