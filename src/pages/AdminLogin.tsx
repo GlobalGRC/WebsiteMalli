@@ -6,18 +6,18 @@ import { Shield, Lock } from 'lucide-react';
 // Mock users database
 const MOCK_USERS = [
   {
-    username: 'admin',
-    password: 'admin123',
+    username: 'MalliKarjuna',
+    password: 'malli@123',
     role: 'admin'
   },
   {
-    username: 'dev',
-    password: 'dev123',
+    username: 'AlonePlayZz',
+    password: 'alone#2009',
     role: 'dev'
   },
   {
-    username: 'hr',
-    password: 'hr123',
+    username: 'Manager',
+    password: 'manager@123',
     role: 'hr'
   }
 ];
@@ -132,11 +132,11 @@ export const AdminLogin: React.FC = () => {
 
         {/* Demo Credentials */}
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">NOTICE</h3>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>Admin: admin / admin123</li>
-            <li>Dev: dev / dev123</li>
-            <li>HR: hr / hr123</li>
+            <li>Login With Your Ceredenstials</li>
+            <li></li>
+            <li></li>
           </ul>
         </div>
       </motion.div>
