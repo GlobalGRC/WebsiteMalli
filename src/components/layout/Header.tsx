@@ -104,6 +104,8 @@ export const Header: React.FC = () => {
         {/* Connect with us button - Right */}
         <div className="hidden md:flex items-center flex-shrink-0 ml-8 gap-4">
           <NavItem href="#contact" label="Connect with us" isButton={true} />
+          {/* DEBUG: Show detected role and isDev */}
+          <span className="text-xs text-gray-400">role: {isDev ? 'dev' : 'not dev'}</span>
           {isDev && (
             <label className="flex items-center cursor-pointer select-none">
               <input
