@@ -36,7 +36,7 @@ export const Header: React.FC = () => {
         <div className="flex-shrink-0 mr-8">
           <RouterLink to="/" className="flex items-center">
             <img 
-              src="https://sciaglobal.com/appassets/mediaassets/152668da715b461b9db08d3e864f80cc/image/SCIA%20logo%20(1)%20(2).webp" 
+              src="/assets/sciaglobal.png" 
               alt="SCIA Global Logo" 
               className="h-16 w-auto"
             />
