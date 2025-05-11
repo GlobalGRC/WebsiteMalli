@@ -54,15 +54,15 @@ export const Footer: React.FC = () => {
             <ul className="space-y-4">
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 text-[#E60028] mr-2 mt-0.5" />
-                <span className="text-gray-400">Plot No. 38, 3rd Floor, 1st Main Road, Madhapur, Hyderabad, Telangana 500081</span>
+                <span className="text-gray-400">Block A, 3rd Floor Victory Plaza, Brindavan Colony Road, Street Number 1, Sabza Colony, Toli Chowki, Hyderabad, Telangana 500008</span>
               </li>
               <li className="flex items-center">
                 <Phone className="h-5 w-5 text-[#E60028] mr-2" />
-                <span className="text-gray-400">+91 98765 43210</span>
+                <span className="text-gray-400">+91 8309943648</span>
               </li>
               <li className="flex items-center">
                 <Mail className="h-5 w-5 text-[#E60028] mr-2" />
-                <span className="text-gray-400">contact@sciaglobal.com</span>
+                <span className="text-gray-400">mallikarjuna@sciaglobal.com</span>
               </li>
             </ul>
           </div>
