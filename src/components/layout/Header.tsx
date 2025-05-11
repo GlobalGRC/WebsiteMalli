@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useDevMode } from '../../context/DevModeContext';
 
 
 export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { devMode, setDevMode } = useDevMode();
+  const [isDev, setIsDev] = useState(false);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -19,6 +22,16 @@ export const Header: React.FC = () => {
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('adminUser');
+    if (userData) {
+      try {
+        const parsed = JSON.parse(userData);
+        setIsDev(parsed.role === 'dev');
+      } catch {}
+    }
   }, []);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -89,8 +102,19 @@ export const Header: React.FC = () => {
         </div>
         
         {/* Connect with us button - Right */}
-        <div className="hidden md:block flex-shrink-0 ml-8">
+        <div className="hidden md:flex items-center flex-shrink-0 ml-8 gap-4">
           <NavItem href="#contact" label="Connect with us" isButton={true} />
+          {isDev && (
+            <label className="flex items-center cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={devMode}
+                onChange={e => setDevMode(e.target.checked)}
+                className="form-checkbox h-5 w-5 text-[#E60028] mr-2"
+              />
+              <span className="text-xs font-semibold text-[#E60028]">Dev Mode</span>
+            </label>
+          )}
         </div>
         
         {/* Mobile Menu Button */}

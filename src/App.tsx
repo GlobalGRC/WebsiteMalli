@@ -11,6 +11,7 @@ import { AdminPanel } from './pages/AdminPanel';
 import { AdminLogin } from './pages/AdminLogin';
 import { AdminProvider } from './context/AdminContext';
 import { BlogPage } from './pages/BlogPage';
+import { DevModeProvider } from './context/DevModeContext';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -23,36 +24,38 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 function App() {
   return (
-    <AdminProvider>
-    <Router>
-      <Layout>
-        <Routes>
-            {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-            <Route path="/hero" element={<HeroPage />} />
-          <Route path="/courses" element={<CoursesPage />} />
-            <Route path="/services" element={<ServicesPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/careers" element={<CareersPage />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/blog" element={<BlogPage />} />
+    <DevModeProvider>
+      <AdminProvider>
+        <Router>
+          <Layout>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/hero" element={<HeroPage />} />
+              <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/careers" element={<CareersPage />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/blog" element={<BlogPage />} />
 
-            {/* Protected Admin Routes */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminPanel />
-                </ProtectedRoute>
-              }
-            />
+              {/* Protected Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminPanel />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
-    </Router>
-    </AdminProvider>
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Layout>
+        </Router>
+      </AdminProvider>
+    </DevModeProvider>
   );
 }
 
