@@ -8,6 +8,7 @@ export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [, setIsDev] = useState(false);
+  const [branding, setBranding] = useState({ siteName: 'SCIA GLOBAL', logoUrl: '/assets/sciaglobal.png', faviconUrl: '' });
   
   useEffect(() => {
     const handleScroll = () => {
@@ -32,6 +33,27 @@ export const Header: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('siteBranding');
+    if (saved) {
+      try {
+        setBranding({ ...branding, ...JSON.parse(saved) });
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    if (branding.faviconUrl) {
+      let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = branding.faviconUrl;
+    }
+  }, [branding.faviconUrl]);
+
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
@@ -47,8 +69,8 @@ export const Header: React.FC = () => {
         <div className="flex-shrink-0 mr-8">
           <RouterLink to="/" className="flex items-center">
             <img
-              src="/assets/sciaglobal.png"
-              alt="SCIA Global Logo"
+              src={branding.logoUrl || '/assets/sciaglobal.png'}
+              alt={branding.siteName || 'Logo'}
               className="h-16 w-auto"
             />
           </RouterLink>
@@ -70,7 +92,7 @@ export const Header: React.FC = () => {
               to="/about" 
               className="text-md font-medium hover:text-[#E60028] transition-colors duration-300"
             >
-              SCIA GROUP
+              <span className="font-bold text-2xl">{branding.siteName}</span>
             </RouterLink>
             <RouterLink 
               to="/services" 
@@ -126,7 +148,7 @@ export const Header: React.FC = () => {
             className="text-md font-medium hover:text-[#E60028] transition-colors duration-300"
             onClick={toggleMenu}
           >
-            SCIA GROUP
+            <span className="font-bold text-2xl">{branding.siteName}</span>
           </RouterLink>
           <RouterLink 
             to="/services" 

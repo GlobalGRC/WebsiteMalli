@@ -80,7 +80,7 @@ interface ProfilerState {
 export const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'blog' | 'devtools' | 'admintools' | 'usermanagement'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'blog' | 'devtools' | 'admintools' | 'usermanagement' | 'settings'>('jobs');
 
   const { jobs, testimonials } = useAdmin();
 
@@ -199,9 +199,9 @@ export const AdminPanel: React.FC = () => {
             <Star className="w-5 h-5" />
             Testimonials
           </button>
-          <button
+            <button
             onClick={() => setActiveTab('blog')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
               activeTab === 'blog' ? 'bg-[#E60028] text-white' : 'bg-white text-gray-600'
             }`}
           >
@@ -241,6 +241,17 @@ export const AdminPanel: React.FC = () => {
               User Management
             </button>
           )}
+          {user.role === 'dev' && (
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                activeTab === 'settings' ? 'bg-[#E60028] text-white' : 'bg-white text-gray-600'
+              }`}
+            >
+              <Palette className="w-5 h-5" />
+              Settings
+            </button>
+          )}
         </div>
 
         {/* Content Area */}
@@ -255,6 +266,7 @@ export const AdminPanel: React.FC = () => {
           {activeTab === 'devtools' && user.role === 'dev' && <DevTools />}
           {activeTab === 'admintools' && user.role === 'dev' && <AdminTools user={user} />}
           {activeTab === 'usermanagement' && user.role === 'dev' && <UserManagement />}
+          {activeTab === 'settings' && user.role === 'dev' && <SettingsConfiguration />}
         </motion.div>
       </div>
     </div>
@@ -1500,16 +1512,64 @@ const AdminTools: React.FC<{ user: User }> = () => {
 
 // User Management Component (dev only)
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<Array<{ username: string; password: string; role: string }>>(() => {
+  type UserStatus = 'active' | 'inactive' | 'suspended';
+  type User = {
+    username: string;
+    password: string;
+    role: string;
+    status: UserStatus;
+    lastLogin?: string;
+    permissions: string[];
+    activityLog: Array<{ action: string; timestamp: string }>;
+  };
+
+  const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('allUsers');
     return saved ? JSON.parse(saved) : [
-      { username: 'MalliKarjuna', password: 'malli@123', role: 'admin' },
-      { username: 'AlonePlayZz', password: 'alone#2009', role: 'dev' },
-      { username: 'Manager', password: 'manager@123', role: 'hr' }
+      { 
+        username: 'MalliKarjuna', 
+        password: 'malli@123', 
+        role: 'admin',
+        status: 'active',
+        permissions: ['manage_jobs', 'manage_testimonials', 'manage_blog'],
+        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }]
+      },
+      { 
+        username: 'AlonePlayZz', 
+        password: 'alone#2009', 
+        role: 'dev',
+        status: 'active',
+        permissions: ['manage_jobs', 'manage_testimonials', 'manage_blog', 'manage_users', 'dev_tools'],
+        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }]
+      },
+      { 
+        username: 'Manager', 
+        password: 'manager@123', 
+        role: 'hr',
+        status: 'active',
+        permissions: ['manage_jobs'],
+        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }]
+      }
     ];
   });
+
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'admin' });
+  const [newUser, setNewUser] = useState<User>({
+    username: '',
+    password: '',
+    role: 'admin',
+    status: 'active',
+    permissions: [],
+    activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }]
+  });
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const [showActivityLog, setShowActivityLog] = useState(false);
+
+  const availablePermissions = {
+    admin: ['manage_jobs', 'manage_testimonials', 'manage_blog'],
+    dev: ['manage_jobs', 'manage_testimonials', 'manage_blog', 'manage_users', 'dev_tools'],
+    hr: ['manage_jobs']
+  };
 
   useEffect(() => {
     localStorage.setItem('allUsers', JSON.stringify(users));
@@ -1517,8 +1577,19 @@ const UserManagement: React.FC = () => {
 
   const handleAddUser = () => {
     if (!newUser.username || !newUser.password) return;
-    setUsers([...users, newUser]);
-    setNewUser({ username: '', password: '', role: 'admin' });
+    const userWithPermissions: User = {
+      ...newUser,
+      permissions: availablePermissions[newUser.role as keyof typeof availablePermissions] || []
+    };
+    setUsers([...users, userWithPermissions]);
+    setNewUser({
+      username: '',
+      password: '',
+      role: 'admin',
+      status: 'active',
+      permissions: [],
+      activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }]
+    });
   };
 
   const handleEditUser = (index: number) => {
@@ -1529,10 +1600,25 @@ const UserManagement: React.FC = () => {
   const handleUpdateUser = () => {
     if (editingIndex === null) return;
     const updated = [...users];
-    updated[editingIndex] = newUser;
+    const updatedUser: User = {
+      ...newUser,
+      permissions: availablePermissions[newUser.role as keyof typeof availablePermissions] || [],
+      activityLog: [
+        ...users[editingIndex].activityLog,
+        { action: 'User updated', timestamp: new Date().toISOString() }
+      ]
+    };
+    updated[editingIndex] = updatedUser;
     setUsers(updated);
     setEditingIndex(null);
-    setNewUser({ username: '', password: '', role: 'admin' });
+    setNewUser({
+      username: '',
+      password: '',
+      role: 'admin',
+      status: 'active',
+      permissions: [],
+      activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }]
+    });
   };
 
   const handleDeleteUser = (index: number) => {
@@ -1541,65 +1627,360 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleStatusChange = (index: number, newStatus: UserStatus) => {
+    const updated = [...users];
+    updated[index] = {
+      ...updated[index],
+      status: newStatus,
+      activityLog: [
+        ...updated[index].activityLog,
+        { action: `Status changed to ${newStatus}`, timestamp: new Date().toISOString() }
+      ]
+    };
+    setUsers(updated);
+  };
+
+  const handlePermissionChange = (index: number, permission: string, checked: boolean) => {
+    const updated = [...users];
+    const user = updated[index];
+    user.permissions = checked
+      ? [...user.permissions, permission]
+      : user.permissions.filter(p => p !== permission);
+    user.activityLog = [
+      ...user.activityLog,
+      { action: `${permission} permission ${checked ? 'added' : 'removed'}`, timestamp: new Date().toISOString() }
+    ];
+    setUsers(updated);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold mb-4">User Management</h2>
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Username"
-          value={newUser.username}
-          onChange={e => setNewUser({ ...newUser, username: e.target.value })}
-          className="px-2 py-1 border rounded mr-2"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={newUser.password}
-          onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-          className="px-2 py-1 border rounded mr-2"
-        />
-        <select
-          value={newUser.role}
-          onChange={e => setNewUser({ ...newUser, role: e.target.value })}
-          className="px-2 py-1 border rounded mr-2"
-        >
-          <option value="admin">admin</option>
-          <option value="dev">dev</option>
-          <option value="hr">hr</option>
-        </select>
-        {editingIndex === null ? (
-          <button onClick={handleAddUser} className="bg-[#E60028] text-white px-4 py-1 rounded">Add</button>
-        ) : (
-          <button onClick={handleUpdateUser} className="bg-blue-600 text-white px-4 py-1 rounded">Update</button>
-        )}
-        {editingIndex !== null && (
-          <button onClick={() => { setEditingIndex(null); setNewUser({ username: '', password: '', role: 'admin' }); }} className="ml-2 px-4 py-1 rounded border">Cancel</button>
-        )}
+      <h2 className="text-xl font-bold mb-4">Advanced User Management</h2>
+      
+      {/* Add/Edit User Form */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">
+          {editingIndex !== null ? 'Edit User' : 'Add New User'}
+        </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Username"
+              value={newUser.username}
+            onChange={e => setNewUser({ ...newUser, username: e.target.value })}
+            className="px-4 py-2 rounded-lg border border-gray-300"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={newUser.password}
+            onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+              className="px-4 py-2 rounded-lg border border-gray-300"
+            />
+            <select
+              value={newUser.role}
+            onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+              className="px-4 py-2 rounded-lg border border-gray-300"
+            >
+              <option value="admin">Admin</option>
+              <option value="dev">Developer</option>
+              <option value="hr">HR</option>
+            </select>
+          <select
+            value={newUser.status}
+            onChange={e => setNewUser({ ...newUser, status: e.target.value as UserStatus })}
+            className="px-4 py-2 rounded-lg border border-gray-300"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="suspended">Suspended</option>
+          </select>
+            <div className="md:col-span-2 flex justify-end gap-2">
+            {editingIndex !== null && (
+              <button
+                onClick={() => {
+                  setEditingIndex(null);
+                  setNewUser({
+                    username: '',
+                    password: '',
+                    role: 'admin',
+                    status: 'active',
+                    permissions: [],
+                    activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }]
+                  });
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+            )}
+              <button
+              onClick={editingIndex !== null ? handleUpdateUser : handleAddUser}
+                className="bg-[#E60028] text-white px-4 py-2 rounded-lg hover:bg-[#c4001f] transition-colors"
+              >
+              {editingIndex !== null ? 'Update User' : 'Add User'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+      {/* Users List */}
+      <div className="space-y-4">
+        {users.map((user, i) => (
+          <div key={i} className="border rounded-lg p-4">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">{user.username}</h3>
+                <p className="text-gray-600">Role: {user.role}</p>
+                <p className="text-gray-600">Status: 
+                  <span className={`ml-2 px-2 py-1 rounded-full text-sm ${
+                    user.status === 'active' ? 'bg-green-100 text-green-800' :
+                    user.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {user.status}
+                  </span>
+                </p>
+              </div>
+              <div className="flex gap-2">
+              <button
+                  onClick={() => handleEditUser(i)}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteUser(i)}
+                className="text-red-600 hover:text-red-800"
+              >
+                Delete
+              </button>
+                <button
+                  onClick={() => {
+                    setSelectedUser(i);
+                    setShowActivityLog(true);
+                  }}
+                  className="text-green-600 hover:text-green-800"
+                >
+                  Activity
+                </button>
+            </div>
+          </div>
+
+            {/* Status Management */}
+            <div className="mb-4">
+              <h4 className="font-medium mb-2">Status Management</h4>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleStatusChange(i, 'active')}
+                  className={`px-3 py-1 rounded ${
+                    user.status === 'active' ? 'bg-green-600 text-white' : 'bg-gray-200'
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => handleStatusChange(i, 'inactive')}
+                  className={`px-3 py-1 rounded ${
+                    user.status === 'inactive' ? 'bg-yellow-600 text-white' : 'bg-gray-200'
+                  }`}
+                >
+                  Inactive
+                </button>
+                <button
+                  onClick={() => handleStatusChange(i, 'suspended')}
+                  className={`px-3 py-1 rounded ${
+                    user.status === 'suspended' ? 'bg-red-600 text-white' : 'bg-gray-200'
+                  }`}
+                >
+                  Suspended
+                </button>
+              </div>
+            </div>
+
+            {/* Permissions Management */}
+            <div>
+              <h4 className="font-medium mb-2">Permissions</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {Object.values(availablePermissions).flat().filter((v, i, a) => a.indexOf(v) === i).map(permission => (
+                  <label key={permission} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={user.permissions.includes(permission)}
+                      onChange={e => handlePermissionChange(i, permission, e.target.checked)}
+                      className="rounded"
+                    />
+                    <span className="text-sm">{permission.replace('_', ' ')}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-      <table className="w-full text-left border">
-        <thead>
-          <tr className="bg-gray-50">
-            <th className="px-4 py-2">Username</th>
-            <th className="px-4 py-2">Password</th>
-            <th className="px-4 py-2">Role</th>
-            <th className="px-4 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user, i) => (
-            <tr key={i}>
-              <td className="px-4 py-2">{user.username}</td>
-              <td className="px-4 py-2">{user.password}</td>
-              <td className="px-4 py-2">{user.role}</td>
-              <td className="px-4 py-2">
-                <button onClick={() => handleEditUser(i)} className="text-blue-600 hover:underline mr-2">Edit</button>
-                <button onClick={() => handleDeleteUser(i)} className="text-red-600 hover:underline">Delete</button>
-              </td>
-            </tr>
+
+      {/* Activity Log Modal */}
+      {showActivityLog && selectedUser !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Activity Log - {users[selectedUser].username}</h3>
+              <button
+                onClick={() => setShowActivityLog(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-2">
+              {users[selectedUser].activityLog.map((log, index) => (
+                <div key={index} className="border-b pb-2">
+                  <p className="font-medium">{log.action}</p>
+                  <p className="text-sm text-gray-500">{new Date(log.timestamp).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SettingsConfiguration: React.FC = () => {
+  const [branding, setBranding] = useState(() => {
+    const saved = localStorage.getItem('siteBranding');
+    return saved ? JSON.parse(saved) : { siteName: 'My Company', logoUrl: '', faviconUrl: '' };
+  });
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('siteTheme');
+    return saved ? JSON.parse(saved) : { primary: '#E60028', background: '#ffffff', text: '#000000' };
+  });
+  const [maintenance, setMaintenance] = useState(() => {
+    const saved = localStorage.getItem('siteMaintenance');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [featureToggles, setFeatureToggles] = useState(() => {
+    const saved = localStorage.getItem('featureToggles');
+    return saved ? JSON.parse(saved) : {
+      blog: true,
+      testimonials: true,
+      jobs: true,
+      adminPanel: true
+    };
+  });
+
+  // Save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem('siteBranding', JSON.stringify(branding));
+  }, [branding]);
+  useEffect(() => {
+    localStorage.setItem('siteTheme', JSON.stringify(theme));
+  }, [theme]);
+  useEffect(() => {
+    localStorage.setItem('siteMaintenance', JSON.stringify(maintenance));
+  }, [maintenance]);
+  useEffect(() => {
+    localStorage.setItem('featureToggles', JSON.stringify(featureToggles));
+  }, [featureToggles]);
+
+  return (
+    <div className="space-y-8">
+      <h2 className="text-2xl font-bold mb-6">Settings & Configuration</h2>
+      {/* Branding */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4">Branding</h3>
+        <div className="flex flex-col gap-4">
+          <label>
+            Site Name:
+            <input
+              type="text"
+              value={branding.siteName}
+              onChange={e => setBranding({ ...branding, siteName: e.target.value })}
+              className="ml-2 px-2 py-1 border rounded"
+            />
+          </label>
+          <label>
+            Logo URL:
+            <input
+              type="text"
+              value={branding.logoUrl}
+              onChange={e => setBranding({ ...branding, logoUrl: e.target.value })}
+              className="ml-2 px-2 py-1 border rounded"
+            />
+          </label>
+          <label>
+            Favicon URL:
+            <input
+              type="text"
+              value={branding.faviconUrl}
+              onChange={e => setBranding({ ...branding, faviconUrl: e.target.value })}
+              className="ml-2 px-2 py-1 border rounded"
+            />
+          </label>
+        </div>
+      </div>
+      {/* Theme */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4">Theme</h3>
+        <div className="flex flex-col gap-4">
+          <label>
+            Primary Color:
+            <input
+              type="color"
+              value={theme.primary}
+              onChange={e => setTheme({ ...theme, primary: e.target.value })}
+              className="ml-2"
+            />
+          </label>
+          <label>
+            Background Color:
+            <input
+              type="color"
+              value={theme.background}
+              onChange={e => setTheme({ ...theme, background: e.target.value })}
+              className="ml-2"
+            />
+          </label>
+          <label>
+            Text Color:
+            <input
+              type="color"
+              value={theme.text}
+              onChange={e => setTheme({ ...theme, text: e.target.value })}
+              className="ml-2"
+            />
+          </label>
+        </div>
+      </div>
+      {/* Maintenance Mode */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4">Maintenance Mode</h3>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={maintenance}
+            onChange={e => setMaintenance(e.target.checked)}
+          />
+          Enable Maintenance Mode
+        </label>
+      </div>
+      {/* Feature Toggles */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4">Feature Toggles</h3>
+        <div className="flex flex-col gap-2">
+          {Object.keys(featureToggles).map(key => (
+            <label key={key} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={featureToggles[key]}
+                onChange={e => setFeatureToggles({ ...featureToggles, [key]: e.target.checked })}
+              />
+              {key.charAt(0).toUpperCase() + key.slice(1)}
+            </label>
           ))}
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   );
 }; 

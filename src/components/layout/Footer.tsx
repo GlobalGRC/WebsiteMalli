@@ -1,9 +1,18 @@
-import React from 'react';
-import { Shield, Mail, Phone, MapPin, Linkedin, Twitter, Facebook } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook } from 'lucide-react';
 import { Link } from '../../utils/Link';
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const [branding, setBranding] = useState({ siteName: 'SCIA GLOBAL' });
+  useEffect(() => {
+    const saved = localStorage.getItem('siteBranding');
+    if (saved) {
+      try {
+        setBranding({ ...branding, ...JSON.parse(saved) });
+      } catch {}
+    }
+  }, []);
 
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8">
@@ -12,7 +21,7 @@ export const Footer: React.FC = () => {
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
-              <span className="font-bold text-2xl">SCIA GLOBAL</span>
+              <span className="font-bold text-2xl">{branding.siteName}</span>
             </div>
             <p className="text-gray-400 mb-4">
               Leading the way in IT compliance, cybersecurity, and risk management solutions.
@@ -72,7 +81,7 @@ export const Footer: React.FC = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm mb-4 md:mb-0">
-            &copy; {currentYear} SCIA GLOBAL. All rights reserved.
+            &copy; {currentYear} {branding.siteName}. All rights reserved.
           </p>
           <div className="flex space-x-6">
             <Link href="#" className="text-gray-500 hover:text-white text-sm transition-colors">
