@@ -80,7 +80,7 @@ interface ProfilerState {
 export const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'blog' | 'devtools' | 'admintools'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'blog' | 'devtools' | 'admintools' | 'usermanagement'>('jobs');
 
   const { jobs, testimonials } = useAdmin();
 
@@ -230,6 +230,17 @@ export const AdminPanel: React.FC = () => {
               Admin Tools
             </button>
           )}
+          {user.role === 'dev' && (
+            <button
+              onClick={() => setActiveTab('usermanagement')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                activeTab === 'usermanagement' ? 'bg-[#E60028] text-white' : 'bg-white text-gray-600'
+              }`}
+            >
+              <Network className="w-5 h-5" />
+              User Management
+            </button>
+          )}
         </div>
 
         {/* Content Area */}
@@ -243,6 +254,7 @@ export const AdminPanel: React.FC = () => {
           {activeTab === 'blog' && <BlogPostsManager user={user} />}
           {activeTab === 'devtools' && user.role === 'dev' && <DevTools />}
           {activeTab === 'admintools' && user.role === 'dev' && <AdminTools user={user} />}
+          {activeTab === 'usermanagement' && user.role === 'dev' && <UserManagement />}
         </motion.div>
       </div>
     </div>
@@ -1482,6 +1494,112 @@ const AdminTools: React.FC<{ user: User }> = () => {
           </table>
         </div>
       </div>
+    </div>
+  );
+};
+
+// User Management Component (dev only)
+const UserManagement: React.FC = () => {
+  const [users, setUsers] = useState<Array<{ username: string; password: string; role: string }>>(() => {
+    const saved = localStorage.getItem('allUsers');
+    return saved ? JSON.parse(saved) : [
+      { username: 'MalliKarjuna', password: 'malli@123', role: 'admin' },
+      { username: 'AlonePlayZz', password: 'alone#2009', role: 'dev' },
+      { username: 'Manager', password: 'manager@123', role: 'hr' }
+    ];
+  });
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'admin' });
+
+  useEffect(() => {
+    localStorage.setItem('allUsers', JSON.stringify(users));
+  }, [users]);
+
+  const handleAddUser = () => {
+    if (!newUser.username || !newUser.password) return;
+    setUsers([...users, newUser]);
+    setNewUser({ username: '', password: '', role: 'admin' });
+  };
+
+  const handleEditUser = (index: number) => {
+    setEditingIndex(index);
+    setNewUser(users[index]);
+  };
+
+  const handleUpdateUser = () => {
+    if (editingIndex === null) return;
+    const updated = [...users];
+    updated[editingIndex] = newUser;
+    setUsers(updated);
+    setEditingIndex(null);
+    setNewUser({ username: '', password: '', role: 'admin' });
+  };
+
+  const handleDeleteUser = (index: number) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      setUsers(users.filter((_, i) => i !== index));
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-xl font-bold mb-4">User Management</h2>
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Username"
+          value={newUser.username}
+          onChange={e => setNewUser({ ...newUser, username: e.target.value })}
+          className="px-2 py-1 border rounded mr-2"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={newUser.password}
+          onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+          className="px-2 py-1 border rounded mr-2"
+        />
+        <select
+          value={newUser.role}
+          onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+          className="px-2 py-1 border rounded mr-2"
+        >
+          <option value="admin">admin</option>
+          <option value="dev">dev</option>
+          <option value="hr">hr</option>
+        </select>
+        {editingIndex === null ? (
+          <button onClick={handleAddUser} className="bg-[#E60028] text-white px-4 py-1 rounded">Add</button>
+        ) : (
+          <button onClick={handleUpdateUser} className="bg-blue-600 text-white px-4 py-1 rounded">Update</button>
+        )}
+        {editingIndex !== null && (
+          <button onClick={() => { setEditingIndex(null); setNewUser({ username: '', password: '', role: 'admin' }); }} className="ml-2 px-4 py-1 rounded border">Cancel</button>
+        )}
+      </div>
+      <table className="w-full text-left border">
+        <thead>
+          <tr className="bg-gray-50">
+            <th className="px-4 py-2">Username</th>
+            <th className="px-4 py-2">Password</th>
+            <th className="px-4 py-2">Role</th>
+            <th className="px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user, i) => (
+            <tr key={i}>
+              <td className="px-4 py-2">{user.username}</td>
+              <td className="px-4 py-2">{user.password}</td>
+              <td className="px-4 py-2">{user.role}</td>
+              <td className="px-4 py-2">
+                <button onClick={() => handleEditUser(i)} className="text-blue-600 hover:underline mr-2">Edit</button>
+                <button onClick={() => handleDeleteUser(i)} className="text-red-600 hover:underline">Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }; 
