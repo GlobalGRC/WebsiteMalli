@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, Briefcase, Star, LogOut } from 'lucide-react';
-import { useAdmin, JobOpening, Testimonial } from '../context/AdminContext';
+import { useAdmin, JobOpening, Testimonial, BlogPost } from '../context/AdminContext';
 
 // Define types
 type User = {
@@ -13,9 +13,9 @@ type User = {
 export const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'users'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'users' | 'blog'>('jobs');
 
-  const { jobs, testimonials } = useAdmin();
+  const { jobs, testimonials, blogPosts, addBlogPost, updateBlogPost, deleteBlogPost } = useAdmin();
 
   // Analytics
   const totalJobs = jobs.length;
@@ -143,6 +143,15 @@ export const AdminPanel: React.FC = () => {
               User Management
             </button>
           )}
+          <button
+            onClick={() => setActiveTab('blog')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+              activeTab === 'blog' ? 'bg-[#E60028] text-white' : 'bg-white text-gray-600'
+            }`}
+          >
+            <Star className="w-5 h-5" />
+            Blog Posts
+          </button>
         </div>
 
         {/* Content Area */}
@@ -154,6 +163,7 @@ export const AdminPanel: React.FC = () => {
           {activeTab === 'jobs' && <JobOpeningsManager />}
           {activeTab === 'testimonials' && <TestimonialsManager />}
           {activeTab === 'users' && user.role === 'admin' && <UserManager />}
+          {activeTab === 'blog' && <BlogPostsManager user={user} />}
         </motion.div>
       </div>
     </div>
@@ -585,6 +595,133 @@ const UserManager: React.FC = () => {
               >
                 Delete
               </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Blog Posts Manager Component
+const BlogPostsManager: React.FC<{ user: User }> = ({ user }) => {
+  const { blogPosts, addBlogPost, updateBlogPost, deleteBlogPost } = useAdmin();
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  const [newPost, setNewPost] = useState<Partial<BlogPost>>({
+    title: '',
+    content: '',
+  });
+
+  const handleAddPost = () => {
+    if (newPost.title && newPost.content) {
+      addBlogPost({
+        title: newPost.title,
+        content: newPost.content,
+        author: user.role,
+      });
+      setNewPost({ title: '', content: '' });
+      setIsAdding(false);
+    }
+  };
+
+  const handleUpdatePost = (id: string) => {
+    if (editingPost) {
+      updateBlogPost(id, editingPost);
+      setEditingPost(null);
+    }
+  };
+
+  const handleDeletePost = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this blog post?')) {
+      deleteBlogPost(id);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Manage Blog Posts</h2>
+        <button
+          onClick={() => setIsAdding(true)}
+          className="bg-[#E60028] text-white px-4 py-2 rounded-lg hover:bg-[#c4001f] transition-colors"
+        >
+          Add New Post
+        </button>
+      </div>
+
+      {/* Add/Edit Blog Post Form */}
+      {(isAdding || editingPost) && (
+        <div className="bg-gray-50 p-6 rounded-lg mb-6">
+          <h3 className="text-xl font-semibold mb-4">
+            {editingPost ? 'Edit Blog Post' : 'Add New Blog Post'}
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            <input
+              type="text"
+              placeholder="Title"
+              value={editingPost?.title || newPost.title}
+              onChange={(e) => editingPost
+                ? setEditingPost({ ...editingPost, title: e.target.value })
+                : setNewPost({ ...newPost, title: e.target.value })
+              }
+              className="px-4 py-2 rounded-lg border border-gray-300"
+            />
+            <textarea
+              placeholder="Content"
+              value={editingPost?.content || newPost.content}
+              onChange={(e) => editingPost
+                ? setEditingPost({ ...editingPost, content: e.target.value })
+                : setNewPost({ ...newPost, content: e.target.value })
+              }
+              className="px-4 py-2 rounded-lg border border-gray-300"
+              rows={4}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setIsAdding(false);
+                  setEditingPost(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => editingPost ? handleUpdatePost(editingPost.id) : handleAddPost()}
+                className="bg-[#E60028] text-white px-4 py-2 rounded-lg hover:bg-[#c4001f] transition-colors"
+              >
+                {editingPost ? 'Update Post' : 'Add Post'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Blog Posts List */}
+      <div className="space-y-4">
+        {blogPosts.map((post) => (
+          <div key={post.id} className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-semibold">{post.title}</h3>
+                <p className="text-gray-500 text-sm mb-2">{new Date(post.date).toLocaleDateString()} by {post.author.toUpperCase()}</p>
+                <p className="mt-2 text-gray-700">{post.content.slice(0, 120)}{post.content.length > 120 ? '...' : ''}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingPost(post)}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         ))}
