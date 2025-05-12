@@ -68,7 +68,7 @@ export const Header: React.FC = () => {
         {/* Logo - Left */}
         <div className="flex-shrink-0 mr-8">
           <RouterLink to="/" className="flex items-center">
-            <img
+            <img 
               src={branding.logoUrl || '/assets/sciaglobal.png'}
               alt={branding.siteName || 'Logo'}
               className="h-16 w-auto"
@@ -92,7 +92,7 @@ export const Header: React.FC = () => {
               to="/about" 
               className="text-md font-medium hover:text-[#E60028] transition-colors duration-300"
             >
-              <span className="font-bold text-2xl">{branding.siteName}</span>
+              {branding.siteName}
             </RouterLink>
             <RouterLink 
               to="/services" 

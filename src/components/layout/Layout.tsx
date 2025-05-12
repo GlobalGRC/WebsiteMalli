@@ -1,13 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { CursorEffect } from '../animations/CursorEffect';
+import { MaintenancePage } from '../../App';
 
 type LayoutProps = {
   children: React.ReactNode;
 };
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const [maintenance, setMaintenance] = useState(false);
+  useEffect(() => {
+    function checkMaintenance() {
+      setMaintenance(localStorage.getItem('siteMaintenance') === 'true');
+    }
+    checkMaintenance();
+    window.addEventListener('storage', checkMaintenance);
+    return () => window.removeEventListener('storage', checkMaintenance);
+  }, []);
+
   useEffect(() => {
     function applyTheme() {
       const saved = localStorage.getItem('siteTheme');
@@ -24,6 +35,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     window.addEventListener('storage', applyTheme);
     return () => window.removeEventListener('storage', applyTheme);
   }, []);
+
+  if (maintenance && !window.location.pathname.startsWith('/admin')) {
+    return <MaintenancePage />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

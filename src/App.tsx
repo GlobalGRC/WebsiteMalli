@@ -22,7 +22,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-function MaintenancePage() {
+export function MaintenancePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
       <h1 className="text-4xl font-bold mb-4 text-[#E60028]">Site Under Maintenance</h1>
@@ -77,12 +77,12 @@ function App() {
         <Routes>
             {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
-          <Route path="/hero" element={<HeroPage />} />
+            <Route path="/hero" element={<HeroPage />} />
           <Route path="/courses" element={<CoursesPage />} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/careers" element={<CareersPage />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/services" element={<ServicesPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/careers" element={<CareersPage />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
           {featureToggles.blog && <Route path="/blog" element={<BlogPage />} />}
 
             {/* Protected Admin Routes */}
@@ -98,7 +98,7 @@ function App() {
           )}
 
             {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
     </Router>

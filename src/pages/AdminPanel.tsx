@@ -26,9 +26,18 @@ ChartJS.register(
 );
 
 // Define types
+type UserStatus = 'active' | 'inactive' | 'suspended';
+type UserRole = 'admin' | 'dev' | 'hr';
+
 type User = {
   username: string;
-  role: 'admin' | 'dev' | 'hr';
+  password: string;
+  role: UserRole;
+  status: UserStatus;
+  lastLogin?: string;
+  permissions: string[];
+  activityLog: Array<{ action: string; timestamp: string }>;
+  profilePhoto?: string;
 };
 
 // Add type definitions
@@ -80,7 +89,7 @@ interface ProfilerState {
 export const AdminPanel: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'blog' | 'devtools' | 'admintools' | 'usermanagement' | 'settings'>('jobs');
+  const [activeTab, setActiveTab] = useState<'jobs' | 'testimonials' | 'blog' | 'devtools' | 'admintools' | 'usermanagement' | 'settings' | 'profile'>('jobs');
 
   const { jobs, testimonials } = useAdmin();
 
@@ -252,6 +261,15 @@ export const AdminPanel: React.FC = () => {
               Settings
             </button>
           )}
+          {/* Profile Tab */}
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+              activeTab === 'profile' ? 'bg-[#E60028] text-white' : 'bg-white text-gray-600'
+            }`}
+          >
+            Profile
+          </button>
         </div>
 
         {/* Content Area */}
@@ -267,6 +285,7 @@ export const AdminPanel: React.FC = () => {
           {activeTab === 'admintools' && user.role === 'dev' && <AdminTools user={user} />}
           {activeTab === 'usermanagement' && user.role === 'dev' && <UserManagement />}
           {activeTab === 'settings' && user.role === 'dev' && <SettingsConfiguration />}
+          {activeTab === 'profile' && <ProfileSettings user={user} setUser={setUser} />}
         </motion.div>
       </div>
     </div>
@@ -613,16 +632,37 @@ const BlogPostsManager: React.FC<{ user: User }> = ({ user }) => {
   const [newPost, setNewPost] = useState<Partial<BlogPost>>({
     title: '',
     content: '',
+    image: '',
   });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (editingPost) {
+          setEditingPost({ ...editingPost, image: reader.result as string });
+        } else {
+          setNewPost((prev) => ({ ...prev, image: reader.result as string }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleAddPost = () => {
     if (newPost.title && newPost.content) {
+      // Find the current user from localStorage (with profilePhoto)
+      const allUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
+      const currentUser = allUsers.find((u: any) => u.username === user.username);
       addBlogPost({
         title: newPost.title,
         content: newPost.content,
-        author: user.role,
+        author: user.role as UserRole,
+        image: newPost.image || '',
+        authorProfilePhoto: currentUser?.profilePhoto || '',
       });
-      setNewPost({ title: '', content: '' });
+      setNewPost({ title: '', content: '', image: '' });
       setIsAdding(false);
     }
   };
@@ -679,6 +719,19 @@ const BlogPostsManager: React.FC<{ user: User }> = ({ user }) => {
               className="px-4 py-2 rounded-lg border border-gray-300"
               rows={4}
             />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="px-4 py-2 rounded-lg border border-gray-300"
+            />
+            {(editingPost?.image || newPost.image) && (
+              <img
+                src={editingPost?.image || newPost.image}
+                alt="Blog Post Preview"
+                className="w-32 h-32 object-cover rounded-lg border border-gray-200 mt-2"
+              />
+            )}
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => {
@@ -706,8 +759,29 @@ const BlogPostsManager: React.FC<{ user: User }> = ({ user }) => {
           <div key={post.id} className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-start">
               <div>
+                {post.image && (
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-32 h-32 object-cover rounded-lg border border-gray-200 mb-2"
+                  />
+                )}
                 <h3 className="text-xl font-semibold">{post.title}</h3>
-                <p className="text-gray-500 text-sm mb-2">{new Date(post.date).toLocaleDateString()} by {post.author.toUpperCase()}</p>
+                <p className="text-gray-500 text-sm mb-2 flex items-center gap-2">
+                  {post.authorProfilePhoto && (
+                    <img src={post.authorProfilePhoto} alt={post.author} className="w-6 h-6 rounded-full object-cover border" />
+                  )}
+                  {new Date(post.date).toLocaleDateString()} by {post.author.toUpperCase()}
+                  {post.author === 'admin' && (
+                    <span className="ml-2 px-2 py-1 rounded-full text-xs bg-red-100 text-red-700 font-semibold">Admin</span>
+                  )}
+                  {post.author === 'dev' && (
+                    <span className="ml-2 px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700 font-semibold">Developer</span>
+                  )}
+                  {post.author === 'hr' && (
+                    <span className="ml-2 px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 font-semibold">HR</span>
+                  )}
+                </p>
                 <p className="mt-2 text-gray-700">{post.content.slice(0, 120)}{post.content.length > 120 ? '...' : ''}</p>
               </div>
               <div className="flex gap-2">
@@ -1521,6 +1595,7 @@ const UserManagement: React.FC = () => {
     lastLogin?: string;
     permissions: string[];
     activityLog: Array<{ action: string; timestamp: string }>;
+    profilePhoto?: string;
   };
 
   const [users, setUsers] = useState<User[]>(() => {
@@ -1532,7 +1607,8 @@ const UserManagement: React.FC = () => {
         role: 'admin',
         status: 'active',
         permissions: ['manage_jobs', 'manage_testimonials', 'manage_blog'],
-        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }]
+        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }],
+        profilePhoto: '',
       },
       { 
         username: 'AlonePlayZz', 
@@ -1540,7 +1616,8 @@ const UserManagement: React.FC = () => {
         role: 'dev',
         status: 'active',
         permissions: ['manage_jobs', 'manage_testimonials', 'manage_blog', 'manage_users', 'dev_tools'],
-        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }]
+        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }],
+        profilePhoto: '',
       },
       { 
         username: 'Manager', 
@@ -1548,7 +1625,8 @@ const UserManagement: React.FC = () => {
         role: 'hr',
         status: 'active',
         permissions: ['manage_jobs'],
-        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }]
+        activityLog: [{ action: 'Initial setup', timestamp: new Date().toISOString() }],
+        profilePhoto: '',
       }
     ];
   });
@@ -1560,7 +1638,8 @@ const UserManagement: React.FC = () => {
     role: 'admin',
     status: 'active',
     permissions: [],
-    activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }]
+    activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }],
+    profilePhoto: '',
   });
   const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [showActivityLog, setShowActivityLog] = useState(false);
@@ -1588,7 +1667,8 @@ const UserManagement: React.FC = () => {
       role: 'admin',
       status: 'active',
       permissions: [],
-      activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }]
+      activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }],
+      profilePhoto: '',
     });
   };
 
@@ -1617,7 +1697,8 @@ const UserManagement: React.FC = () => {
       role: 'admin',
       status: 'active',
       permissions: [],
-      activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }]
+      activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }],
+      profilePhoto: '',
     });
   };
 
@@ -1694,7 +1775,7 @@ const UserManagement: React.FC = () => {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
             <option value="suspended">Suspended</option>
-          </select>
+            </select>
             <div className="md:col-span-2 flex justify-end gap-2">
             {editingIndex !== null && (
               <button
@@ -1706,7 +1787,8 @@ const UserManagement: React.FC = () => {
                     role: 'admin',
                     status: 'active',
                     permissions: [],
-                    activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }]
+                    activityLog: [{ action: 'User created', timestamp: new Date().toISOString() }],
+                    profilePhoto: '',
                   });
                 }}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
@@ -1730,6 +1812,13 @@ const UserManagement: React.FC = () => {
           <div key={i} className="border rounded-lg p-4">
             <div className="flex justify-between items-start mb-4">
               <div>
+                {user.profilePhoto && (
+                  <img
+                    src={user.profilePhoto}
+                    alt={user.username}
+                    className="w-12 h-12 rounded-full object-cover border mb-2"
+                  />
+                )}
                 <h3 className="text-lg font-semibold">{user.username}</h3>
                 <p className="text-gray-600">Role: {user.role}</p>
                 <p className="text-gray-600">Status: 
@@ -1763,7 +1852,7 @@ const UserManagement: React.FC = () => {
                   className="text-green-600 hover:text-green-800"
                 >
                   Activity
-                </button>
+              </button>
             </div>
           </div>
 
@@ -1876,6 +1965,12 @@ const SettingsConfiguration: React.FC = () => {
   }, [branding]);
   useEffect(() => {
     localStorage.setItem('siteTheme', JSON.stringify(theme));
+    // Immediately apply the theme to the document
+    try {
+      document.documentElement.style.setProperty('--primary-color', theme.primary || '#E60028');
+      document.documentElement.style.setProperty('--background-color', theme.background || '#ffffff');
+      document.documentElement.style.setProperty('--text-color', theme.text || '#000000');
+    } catch {}
   }, [theme]);
   useEffect(() => {
     localStorage.setItem('siteMaintenance', JSON.stringify(maintenance));
@@ -1984,3 +2079,86 @@ const SettingsConfiguration: React.FC = () => {
     </div>
   );
 }; 
+
+const ProfileSettings: React.FC<{ user: User; setUser: React.Dispatch<React.SetStateAction<User | null>> }> = ({ user, setUser }) => {
+  const [profilePhoto, setProfilePhoto] = useState(user?.profilePhoto || '');
+  const [username, setUsername] = useState(user?.username || '');
+  const [password, setPassword] = useState(user?.password || '');
+  const [saving, setSaving] = useState(false);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = () => {
+    setSaving(true);
+    // Update user in localStorage
+    let allUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    const idx = allUsers.findIndex((u: any) => u.username === user.username);
+    if (idx !== -1) {
+      allUsers[idx].profilePhoto = profilePhoto;
+      allUsers[idx].username = username;
+      allUsers[idx].password = password;
+      localStorage.setItem('allUsers', JSON.stringify(allUsers));
+      // Update adminUser as well
+      let adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+      if (adminUser.username === user.username) {
+        adminUser.profilePhoto = profilePhoto;
+        adminUser.username = username;
+        adminUser.password = password;
+        localStorage.setItem('adminUser', JSON.stringify(adminUser));
+      }
+      setUser((prev) => prev ? { ...prev, profilePhoto, username, password } : prev);
+    }
+    setTimeout(() => setSaving(false), 1000);
+  };
+
+  return (
+    <div className="max-w-md mx-auto">
+      <h2 className="text-2xl font-bold mb-6">Profile</h2>
+      <div className="flex flex-col items-center gap-4">
+        <div>
+          <img
+            src={profilePhoto || '/assets/default-profile.png'}
+            alt="Profile Preview"
+            className="w-32 h-32 object-cover rounded-full border border-gray-200 mb-2"
+          />
+        </div>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handlePhotoChange}
+          className="px-4 py-2 rounded-lg border border-gray-300"
+        />
+        <input
+          type="text"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          placeholder="Username"
+          className="px-4 py-2 rounded-lg border border-gray-300 w-full"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Password"
+          className="px-4 py-2 rounded-lg border border-gray-300 w-full"
+        />
+        <button
+          onClick={handleSave}
+          className="bg-[#E60028] text-white px-4 py-2 rounded-lg hover:bg-[#c4001f] transition-colors"
+          disabled={saving}
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
+    </div>
+  );
+};

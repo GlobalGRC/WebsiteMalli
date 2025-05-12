@@ -26,6 +26,14 @@ export type BlogPost = {
   date: string;
   content: string;
   author: 'admin' | 'dev' | 'hr';
+  image?: string; // Optional image URL
+  authorProfilePhoto?: string;
+};
+
+export type UserProfile = {
+  username: string;
+  role: 'admin' | 'dev' | 'hr';
+  profilePhoto?: string;
 };
 
 type AdminContextType = {
