@@ -1566,8 +1566,8 @@ const UserManagement: React.FC = () => {
   const [showActivityLog, setShowActivityLog] = useState(false);
 
   const availablePermissions = {
-    admin: ['manage_jobs', 'manage_testimonials', 'manage_blog'],
-    dev: ['manage_jobs', 'manage_testimonials', 'manage_blog', 'manage_users', 'dev_tools'],
+    admin: ['manage_jobs', 'manage_testimonials', 'manage_blog', 'manage_settings', 'manage_analytics'],
+    dev: ['manage_jobs', 'manage_testimonials', 'manage_blog', 'manage_users', 'dev_tools', 'manage_settings', 'manage_analytics'],
     hr: ['manage_jobs']
   };
 
